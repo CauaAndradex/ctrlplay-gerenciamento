@@ -62,9 +62,30 @@ def init_db(database_path):
             FOREIGN KEY (id_aluno) REFERENCES aluno(id_aluno)
         );
 
+        CREATE TABLE IF NOT EXISTS aula (
+            id_aula INTEGER PRIMARY KEY AUTOINCREMENT,
+            id_turma INTEGER NOT NULL,
+            titulo TEXT NOT NULL,
+            data_aula TEXT NOT NULL,
+            hora_inicio TEXT,
+            hora_fim TEXT,
+            conteudo_previsto TEXT,
+            conteudo_ministrado TEXT,
+            observacoes TEXT,
+            status TEXT NOT NULL DEFAULT 'Planejada'
+                CHECK (status IN ('Planejada', 'Realizada', 'Cancelada')),
+            FOREIGN KEY (id_turma) REFERENCES turma(id_turma)
+        );
+
         CREATE INDEX IF NOT EXISTS idx_aluno_nome ON aluno(nome);
         CREATE INDEX IF NOT EXISTS idx_atividade_aluno_data
             ON atividade(id_aluno, data_registro);
     """)
+    # Migração segura para bancos existentes: adiciona a nota sem apagar registros.
+    colunas_atividade = {linha[1] for linha in db.execute("PRAGMA table_info(atividade)")}
+    if "nota" not in colunas_atividade:
+        db.execute("ALTER TABLE atividade ADD COLUMN nota REAL CHECK (nota IS NULL OR (nota >= 0 AND nota <= 10))")
+
+    db.execute("CREATE INDEX IF NOT EXISTS idx_aula_turma_data ON aula(id_turma, data_aula)")
     db.commit()
     db.close()

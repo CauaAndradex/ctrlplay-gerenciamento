@@ -9,8 +9,9 @@ MVP acadêmico para organizar cadastros de alunos, turmas, matrículas e ativida
 - Login de usuário.
 - Cadastro, listagem, pesquisa, edição e inativação de alunos.
 - Cadastro, listagem, edição e inativação de turmas.
-- Matrícula de alunos em turmas, impedindo duplicidade.
-- Registro de atividades por aluno.
+- Matrícula de alunos em turmas, com visualização de alunos por turma, remoção do vínculo e reativação de matrícula sem apagar histórico.
+- Registro de atividades por aluno com nota opcional de 0 a 10.
+- Cronograma de aulas por turma, com data, horário, conteúdo previsto, conteúdo ministrado, observações e situação.
 - Consulta do histórico individual.
 - Validação de campos no servidor.
 - Consultas SQL parametrizadas.
@@ -50,25 +51,25 @@ $env:SECRET_KEY = python -c "import secrets; print(secrets.token_hex(32))"
 Inicialize o banco:
 
 ```powershell
-flask --app app init-db
+python -m flask --app app init-db
 ```
 
 Crie o primeiro usuário administrador:
 
 ```powershell
-flask --app app create-admin
+python -m flask --app app create-admin
 ```
 
 Opcionalmente, insira dados fictícios:
 
 ```powershell
-flask --app app seed-demo
+python -m flask --app app seed-demo
 ```
 
 Inicie a aplicação:
 
 ```powershell
-flask --app app run --debug
+python -m flask --app app run --debug
 ```
 
 Acesse `http://127.0.0.1:5000`.
@@ -80,10 +81,10 @@ python3 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
 export SECRET_KEY="$(python -c 'import secrets; print(secrets.token_hex(32))')"
-flask --app app init-db
-flask --app app create-admin
-flask --app app seed-demo
-flask --app app run --debug
+python -m flask --app app init-db
+python -m flask --app app create-admin
+python -m flask --app app seed-demo
+python -m flask --app app run --debug
 ```
 
 ## Estrutura
@@ -103,11 +104,12 @@ ctrlplay-gerenciamento/
 O arquivo SQLite é criado em `database/ctrlplay.db`. É possível alterar o caminho com a variável `DATABASE_PATH`.
 
 Entidades:
+- `aula`: cronograma, turma, horários, conteúdo previsto e ministrado, observações e situação.
 - `usuario`: credenciais dos usuários autorizados.
 - `aluno`: dados básicos dos alunos.
 - `turma`: cursos e turmas.
 - `matricula`: relacionamento entre alunos e turmas.
-- `atividade`: histórico de atividades de cada aluno.
+- `atividade`: histórico de atividades de cada aluno, com nota opcional de 0 a 10.
 
 O banco impede matrícula duplicada para o mesmo par aluno/turma. A inativação preserva os registros históricos.
 
@@ -121,6 +123,7 @@ O banco impede matrícula duplicada para o mesmo par aluno/turma. A inativação
 - Não execute o servidor de desenvolvimento do Flask em produção. Utilize um servidor WSGI.
 - O controle de acesso atual diferencia usuário autenticado de visitante, mas ainda não possui perfis/permissões detalhados.
 - A proteção contra tentativas repetidas de login, recuperação de senha, auditoria de ações e política de retenção ainda precisam ser implementadas antes de uso real.
+- Ao atualizar uma instalação existente para a versão 2.0, faça uma cópia de segurança do arquivo `database/ctrlplay.db` e execute novamente `python -m flask --app app init-db`. A inicialização adiciona a coluna de nota e a tabela de aulas sem apagar os registros existentes.
 - O banco SQLite é adequado ao protótipo. Para muitos usuários escrevendo simultaneamente, avalie PostgreSQL.
 - Faça backups consistentes usando a API de backup do SQLite ou com a aplicação parada.
 
@@ -133,9 +136,11 @@ O banco impede matrícula duplicada para o mesmo par aluno/turma. A inativação
 5. Cadastrar turma.
 6. Matricular aluno em turma.
 7. Tentar repetir a mesma matrícula.
-8. Registrar atividade e consultar o histórico.
-9. Sair e verificar que páginas protegidas solicitam login.
-10. Navegar usando somente teclado e ampliar a página.
+8. Registrar atividade com nota entre 0 e 10 e consultar o histórico.
+9. Matricular aluno, removê-lo da turma e matriculá-lo novamente.
+10. Criar, editar, filtrar e excluir aulas no cronograma.
+11. Sair e verificar que páginas protegidas solicitam login.
+12. Navegar usando somente teclado e ampliar a página.
 
 ## Licença e finalidade
 

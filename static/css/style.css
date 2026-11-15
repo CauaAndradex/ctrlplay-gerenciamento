@@ -108,3 +108,5 @@ label { display: block; font-size: 13px; font-weight: 700; margin-bottom: 7px; }
   .searchbar input { flex-basis: 100%; }
   .login-card { padding: 26px 20px; }
 }
+
+.badge-blue { color: #2448bd; background: #e8edff; }

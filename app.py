@@ -275,16 +275,26 @@ def matricula_nova():
         if not aluno or not turma:
             flash("O aluno ou a turma não existe ou está inativo.", "danger")
         else:
-            try:
+            existente = g.db.execute(
+                "SELECT id_matricula, status FROM matricula WHERE id_aluno=? AND id_turma=?",
+                (aluno_id, turma_id)
+            ).fetchone()
+            if existente and existente["status"] == "Ativa":
+                flash("Este aluno já está matriculado nesta turma.", "warning")
+            elif existente:
+                g.db.execute("UPDATE matricula SET status='Ativa', data_matricula=? WHERE id_matricula=?",
+                             (date.today().isoformat(), existente["id_matricula"]))
+                g.db.commit()
+                flash("Matrícula reativada com sucesso.", "success")
+                return redirect(url_for("turma_detalhe", turma_id=turma_id))
+            else:
                 g.db.execute("""
                     INSERT INTO matricula (id_aluno, id_turma, data_matricula, status)
                     VALUES (?, ?, ?, 'Ativa')
                 """, (aluno_id, turma_id, date.today().isoformat()))
                 g.db.commit()
                 flash("Matrícula realizada com sucesso.", "success")
-                return redirect(url_for("alunos"))
-            except sqlite3.IntegrityError:
-                flash("Este aluno já possui matrícula nesta turma.", "warning")
+                return redirect(url_for("turma_detalhe", turma_id=turma_id))
     return render_template("matricula_form.html", alunos=alunos, turmas=turmas)
 
 
@@ -312,6 +322,7 @@ def atividade_nova():
         titulo = request.form.get("titulo", "").strip()
         descricao = request.form.get("descricao", "").strip()
         observacao = request.form.get("observacao", "").strip()
+        nota_texto = request.form.get("nota", "").strip().replace(",", ".")
         data_registro = request.form.get("data_registro", "").strip()
         aluno = g.db.execute("SELECT id_aluno FROM aluno WHERE id_aluno=? AND status='Ativo'", (aluno_id,)).fetchone() if aluno_id else None
         try:
@@ -319,13 +330,21 @@ def atividade_nova():
             data_valida = True
         except ValueError:
             data_valida = False
-        if not aluno or not titulo or not data_valida:
-            flash("Selecione um aluno ativo, informe o título e uma data válida.", "danger")
+        nota = None
+        nota_valida = True
+        if nota_texto:
+            try:
+                nota = float(nota_texto)
+                nota_valida = 0 <= nota <= 10
+            except ValueError:
+                nota_valida = False
+        if not aluno or not titulo or not data_valida or not nota_valida:
+            flash("Selecione um aluno ativo, informe o título, uma data válida e uma nota entre 0 e 10.", "danger")
         else:
             g.db.execute("""
-                INSERT INTO atividade (id_aluno, titulo, descricao, data_registro, observacao)
-                VALUES (?, ?, ?, ?, ?)
-            """, (aluno_id, titulo, descricao or None, data_registro, observacao or None))
+                INSERT INTO atividade (id_aluno, titulo, descricao, data_registro, observacao, nota)
+                VALUES (?, ?, ?, ?, ?, ?)
+            """, (aluno_id, titulo, descricao or None, data_registro, observacao or None, nota))
             g.db.commit()
             flash("Atividade registrada com sucesso.", "success")
             return redirect(url_for("historico", aluno_id=aluno_id))
@@ -343,6 +362,110 @@ def historico(aluno_id):
         ORDER BY data_registro DESC, id_atividade DESC
     """, (aluno_id,)).fetchall()
     return render_template("historico.html", aluno=aluno, atividades=registros)
+
+
+@app.route("/turmas/<int:turma_id>")
+@login_required
+def turma_detalhe(turma_id):
+    turma = g.db.execute("SELECT * FROM turma WHERE id_turma=?", (turma_id,)).fetchone()
+    if turma is None:
+        abort(404)
+    matriculados = g.db.execute("""
+        SELECT m.id_matricula, m.data_matricula, a.id_aluno, a.nome, a.idade
+        FROM matricula m JOIN aluno a ON a.id_aluno=m.id_aluno
+        WHERE m.id_turma=? AND m.status='Ativa'
+        ORDER BY a.nome
+    """, (turma_id,)).fetchall()
+    disponiveis = g.db.execute("""
+        SELECT a.id_aluno, a.nome FROM aluno a
+        WHERE a.status='Ativo' AND NOT EXISTS (
+            SELECT 1 FROM matricula m WHERE m.id_aluno=a.id_aluno
+            AND m.id_turma=? AND m.status='Ativa'
+        ) ORDER BY a.nome
+    """, (turma_id,)).fetchall()
+    return render_template("turma_detalhe.html", turma=turma, matriculados=matriculados, disponiveis=disponiveis)
+
+
+@app.post("/matriculas/<int:matricula_id>/remover")
+@login_required
+def matricula_remover(matricula_id):
+    csrf_protect()
+    matricula = g.db.execute("SELECT id_turma FROM matricula WHERE id_matricula=? AND status='Ativa'", (matricula_id,)).fetchone()
+    if matricula is None:
+        abort(404)
+    g.db.execute("UPDATE matricula SET status='Inativa' WHERE id_matricula=?", (matricula_id,))
+    g.db.commit()
+    flash("Aluno removido da turma. O cadastro e o histórico foram preservados.", "success")
+    return redirect(url_for("turma_detalhe", turma_id=matricula["id_turma"]))
+
+
+@app.route("/cronograma")
+@login_required
+def cronograma():
+    turma_id = request.args.get("turma", type=int)
+    turmas = g.db.execute("SELECT id_turma, nome_turma, curso FROM turma WHERE status='Ativa' ORDER BY nome_turma").fetchall()
+    sql = """SELECT a.*, t.nome_turma, t.curso FROM aula a JOIN turma t ON t.id_turma=a.id_turma"""
+    params = []
+    if turma_id:
+        sql += " WHERE a.id_turma=?"
+        params.append(turma_id)
+    sql += " ORDER BY a.data_aula, a.hora_inicio, a.id_aula"
+    aulas = g.db.execute(sql, params).fetchall()
+    return render_template("cronograma.html", aulas=aulas, turmas=turmas, turma_selecionada=turma_id)
+
+
+@app.route("/aulas/nova", methods=["GET", "POST"])
+@app.route("/aulas/<int:aula_id>/editar", methods=["GET", "POST"])
+@login_required
+def aula_form(aula_id=None):
+    aula = g.db.execute("SELECT * FROM aula WHERE id_aula=?", (aula_id,)).fetchone() if aula_id else None
+    if aula_id and aula is None:
+        abort(404)
+    turmas = g.db.execute("SELECT id_turma, nome_turma, curso FROM turma WHERE status='Ativa' ORDER BY nome_turma").fetchall()
+    if request.method == "POST":
+        csrf_protect()
+        try:
+            turma_id = int(request.form.get("id_turma", ""))
+        except ValueError:
+            turma_id = None
+        titulo = request.form.get("titulo", "").strip()
+        data_aula = request.form.get("data_aula", "").strip()
+        inicio = request.form.get("hora_inicio", "").strip()
+        fim = request.form.get("hora_fim", "").strip()
+        previsto = request.form.get("conteudo_previsto", "").strip()
+        ministrado = request.form.get("conteudo_ministrado", "").strip()
+        observacoes = request.form.get("observacoes", "").strip()
+        status = request.form.get("status", "Planejada")
+        turma_ok = g.db.execute("SELECT id_turma FROM turma WHERE id_turma=? AND status='Ativa'", (turma_id,)).fetchone() if turma_id else None
+        try:
+            date.fromisoformat(data_aula)
+            data_ok = True
+        except ValueError:
+            data_ok = False
+        horarios_ok = not (inicio and fim) or inicio < fim
+        if not turma_ok or not titulo or not data_ok or not horarios_ok or status not in ("Planejada", "Realizada", "Cancelada"):
+            flash("Confira turma, título, data, horários e situação da aula.", "danger")
+        else:
+            valores = (turma_id, titulo, data_aula, inicio or None, fim or None, previsto or None, ministrado or None, observacoes or None, status)
+            if aula:
+                g.db.execute("""UPDATE aula SET id_turma=?, titulo=?, data_aula=?, hora_inicio=?, hora_fim=?, conteudo_previsto=?, conteudo_ministrado=?, observacoes=?, status=? WHERE id_aula=?""", valores + (aula_id,))
+                flash("Aula atualizada.", "success")
+            else:
+                g.db.execute("""INSERT INTO aula (id_turma, titulo, data_aula, hora_inicio, hora_fim, conteudo_previsto, conteudo_ministrado, observacoes, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)""", valores)
+                flash("Aula adicionada ao cronograma.", "success")
+            g.db.commit()
+            return redirect(url_for("cronograma"))
+    return render_template("aula_form.html", aula=aula, turmas=turmas)
+
+
+@app.post("/aulas/<int:aula_id>/excluir")
+@login_required
+def aula_excluir(aula_id):
+    csrf_protect()
+    g.db.execute("DELETE FROM aula WHERE id_aula=?", (aula_id,))
+    g.db.commit()
+    flash("Aula removida do cronograma.", "success")
+    return redirect(url_for("cronograma"))
 
 
 @app.cli.command("init-db")

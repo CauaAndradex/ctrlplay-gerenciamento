@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block title %}{{ 'Editar aula' if aula else 'Nova aula' }} | Ctrl Play{% endblock %}
+{% block content %}
+<div class="page-heading"><div><p class="eyebrow">PLANEJAMENTO PEDAGÓGICO</p><h1>{{ 'Editar aula' if aula else 'Adicionar aula' }}</h1><p class="muted">Registre o cronograma e acompanhe o conteúdo ministrado.</p></div><a class="btn btn-outline" href="{{ url_for('cronograma') }}">← Voltar</a></div>
+<section class="panel form-panel"><form method="post" class="form-grid"><input type="hidden" name="csrf_token" value="{{ session.get('csrf_token') }}">
+<div class="field full-field"><label for="id_turma">Turma *</label><select id="id_turma" name="id_turma" required><option value="">Selecione uma turma</option>{% for turma in turmas %}<option value="{{ turma.id_turma }}" {{ 'selected' if aula and aula.id_turma == turma.id_turma else '' }}>{{ turma.nome_turma }} — {{ turma.curso }}</option>{% endfor %}</select></div>
+<div class="field full-field"><label for="titulo">Título da aula *</label><input id="titulo" name="titulo" maxlength="150" required value="{{ aula.titulo if aula else '' }}" placeholder="Ex.: Aula 05 — Estruturas de repetição"></div>
+<div class="field"><label for="data_aula">Data *</label><input id="data_aula" name="data_aula" type="date" required value="{{ aula.data_aula if aula else today }}"></div>
+<div class="field"><label for="status">Situação</label><select id="status" name="status">{% for st in ['Planejada','Realizada','Cancelada'] %}<option value="{{ st }}" {{ 'selected' if aula and aula.status == st else '' }}>{{ st }}</option>{% endfor %}</select></div>
+<div class="field"><label for="hora_inicio">Horário inicial</label><input id="hora_inicio" name="hora_inicio" type="time" value="{{ aula.hora_inicio if aula and aula.hora_inicio else '' }}"></div>
+<div class="field"><label for="hora_fim">Horário final</label><input id="hora_fim" name="hora_fim" type="time" value="{{ aula.hora_fim if aula and aula.hora_fim else '' }}"></div>
+<div class="field full-field"><label for="conteudo_previsto">Conteúdo previsto</label><textarea id="conteudo_previsto" name="conteudo_previsto" rows="4" placeholder="Tópicos e atividades planejadas...">{{ aula.conteudo_previsto if aula and aula.conteudo_previsto else '' }}</textarea></div>
+<div class="field full-field"><label for="conteudo_ministrado">Conteúdo ministrado</label><textarea id="conteudo_ministrado" name="conteudo_ministrado" rows="4" placeholder="Registre o que realmente foi trabalhado na aula...">{{ aula.conteudo_ministrado if aula and aula.conteudo_ministrado else '' }}</textarea></div>
+<div class="field full-field"><label for="observacoes">Observações</label><textarea id="observacoes" name="observacoes" rows="3">{{ aula.observacoes if aula and aula.observacoes else '' }}</textarea></div>
+<div class="form-actions full-field"><a class="btn btn-outline" href="{{ url_for('cronograma') }}">Cancelar</a><button class="btn btn-primary" type="submit">Salvar aula</button></div></form></section>
+{% endblock %}

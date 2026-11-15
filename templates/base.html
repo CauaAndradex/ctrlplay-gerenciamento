@@ -16,6 +16,7 @@
       <a href="{{ url_for('turmas') }}">Turmas</a>
       <a href="{{ url_for('atividades') }}">Atividades</a>
       <a href="{{ url_for('matricula_nova') }}">Matrículas</a>
+      <a href="{{ url_for('cronograma') }}">Cronograma</a>
     </nav>
     <div class="user-area"><span>{{ session.get('user_name') }}</span>
       <form method="post" action="{{ url_for('logout') }}">
