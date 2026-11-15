@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block title %}Atividades | Ctrl Play{% endblock %}
+{% block content %}
+<div class="page-heading"><div><p class="eyebrow">ACOMPANHAMENTO</p><h1>Atividades</h1><p class="muted">Registros de atividades dos alunos.</p></div><a class="btn btn-primary" href="{{ url_for('atividade_nova') }}">＋ Registrar atividade</a></div>
+<section class="panel">
+{% if atividades %}<div class="table-wrap"><table><thead><tr><th>Atividade</th><th>Aluno</th><th>Data</th><th>Observação</th><th></th></tr></thead><tbody>
+{% for at in atividades %}<tr><td><strong>{{ at.titulo }}</strong><small class="table-sub">{{ at.descricao or '' }}</small></td><td>{{ at.aluno_nome }}</td><td>{{ at.data_registro }}</td><td>{{ at.observacao or '—' }}</td><td><a href="{{ url_for('historico', aluno_id=at.id_aluno) }}">Histórico</a></td></tr>{% endfor %}
+</tbody></table></div>{% else %}<div class="empty">Nenhuma atividade registrada.</div>{% endif %}
+</section>
+{% endblock %}

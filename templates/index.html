@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block title %}Início | Ctrl Play{% endblock %}
+{% block content %}
+<section class="welcome">
+  <div><p class="eyebrow">PAINEL PRINCIPAL</p><h1>Olá, {{ session.get('user_name') }}!</h1><p class="muted">Gerencie as informações acadêmicas em um só lugar.</p></div>
+  <a class="btn btn-primary" href="{{ url_for('aluno_form') }}">＋ Cadastrar aluno</a>
+</section>
+<section class="stats">
+  <article class="stat-card"><span class="stat-icon">♙</span><p>Alunos ativos</p><strong>{{ totals.alunos }}</strong><a href="{{ url_for('alunos') }}">Ver alunos →</a></article>
+  <article class="stat-card"><span class="stat-icon">▦</span><p>Turmas ativas</p><strong>{{ totals.turmas }}</strong><a href="{{ url_for('turmas') }}">Ver turmas →</a></article>
+  <article class="stat-card"><span class="stat-icon">✎</span><p>Atividades registradas</p><strong>{{ totals.atividades }}</strong><a href="{{ url_for('atividades') }}">Ver atividades →</a></article>
+</section>
+<section class="panel">
+  <div class="section-heading"><div><p class="eyebrow">ACOMPANHAMENTO</p><h2>Cadastros recentes</h2></div><a href="{{ url_for('alunos') }}" class="text-link">Ver todos</a></div>
+  {% if recent %}
+  <div class="table-wrap"><table><thead><tr><th>Aluno</th><th>Data de cadastro</th><th>Ação</th></tr></thead><tbody>
+  {% for aluno in recent %}<tr><td>{{ aluno.nome }}</td><td>{{ aluno.data_cadastro }}</td><td><a href="{{ url_for('historico', aluno_id=aluno.id_aluno) }}">Ver histórico</a></td></tr>{% endfor %}
+  </tbody></table></div>
+  {% else %}<div class="empty">Nenhum aluno cadastrado. Comece adicionando o primeiro aluno.</div>{% endif %}
+</section>
+{% endblock %}

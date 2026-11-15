@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block title %}Alunos | Ctrl Play{% endblock %}
+{% block content %}
+<div class="page-heading"><div><p class="eyebrow">CADASTROS</p><h1>Alunos</h1><p class="muted">Consulte e gerencie os alunos cadastrados.</p></div><a class="btn btn-primary" href="{{ url_for('aluno_form') }}">＋ Novo aluno</a></div>
+<section class="panel">
+  <form class="searchbar" method="get"><label class="sr-only" for="q">Buscar aluno pelo nome</label><input id="q" name="q" value="{{ termo }}" placeholder="Buscar aluno pelo nome"><button class="btn btn-dark" type="submit">Buscar</button>{% if termo %}<a class="btn btn-outline" href="{{ url_for('alunos') }}">Limpar</a>{% endif %}</form>
+  {% if alunos %}<div class="table-wrap"><table><thead><tr><th>Nome</th><th>Idade</th><th>Turma(s)</th><th>Status</th><th>Ações</th></tr></thead><tbody>
+  {% for aluno in alunos %}<tr><td><strong>{{ aluno.nome }}</strong></td><td>{{ aluno.idade }}</td><td>{{ aluno.turmas or 'Sem turma' }}</td><td><span class="badge {{ 'badge-green' if aluno.status == 'Ativo' else 'badge-gray' }}">{{ aluno.status }}</span></td><td class="actions"><a href="{{ url_for('historico', aluno_id=aluno.id_aluno) }}">Histórico</a><a href="{{ url_for('aluno_form', aluno_id=aluno.id_aluno) }}">Editar</a>{% if aluno.status == 'Ativo' %}<form method="post" action="{{ url_for('aluno_inativar', aluno_id=aluno.id_aluno) }}" data-confirm="Deseja inativar este aluno?"><input type="hidden" name="csrf_token" value="{{ session.get('csrf_token') }}"><button class="link-button danger-text">Inativar</button></form>{% endif %}</td></tr>{% endfor %}
+  </tbody></table></div>{% else %}<div class="empty">Nenhum aluno encontrado.</div>{% endif %}
+</section>
+{% endblock %}

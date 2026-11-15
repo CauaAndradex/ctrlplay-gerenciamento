@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block title %}Entrar | Ctrl Play{% endblock %}
+{% block content %}
+<section class="login-wrap">
+  <div class="login-card">
+    <div class="brand-mark large">CP</div>
+    <p class="eyebrow">SISTEMA DE GESTÃO</p>
+    <h1>Bem-vindo de volta</h1>
+    <p class="muted">Entre para gerenciar alunos, turmas e atividades.</p>
+    <form method="post" class="form-stack">
+      <input type="hidden" name="csrf_token" value="{{ session.get('csrf_token') }}">
+      <label for="username">Usuário</label>
+      <input id="username" name="username" autocomplete="username" required>
+      <label for="password">Senha</label>
+      <input id="password" name="password" type="password" autocomplete="current-password" required>
+      <button class="btn btn-primary full" type="submit">Entrar no sistema</button>
+    </form>
+    <p class="tiny muted">Acesso restrito a pessoas autorizadas.</p>
+  </div>
+</section>
+{% endblock %}

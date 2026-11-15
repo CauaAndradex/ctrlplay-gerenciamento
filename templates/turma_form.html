@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block title %}{{ 'Editar' if turma else 'Nova' }} turma | Ctrl Play{% endblock %}
+{% block content %}
+<div class="page-heading"><div><p class="eyebrow">ORGANIZAÇÃO</p><h1>{{ 'Editar turma' if turma else 'Cadastrar turma' }}</h1></div><a class="btn btn-outline" href="{{ url_for('turmas') }}">← Voltar</a></div>
+<section class="panel form-panel"><form method="post" class="form-grid">
+<input type="hidden" name="csrf_token" value="{{ session.get('csrf_token') }}">
+<div class="field full-field"><label for="nome_turma">Nome da turma <span class="required">*</span></label><input id="nome_turma" name="nome_turma" required maxlength="100" value="{{ request.form.get('nome_turma', turma.nome_turma if turma else '') }}"></div>
+<div class="field"><label for="curso">Curso <span class="required">*</span></label><input id="curso" name="curso" required maxlength="100" value="{{ request.form.get('curso', turma.curso if turma else '') }}"></div>
+<div class="field"><label for="status">Status</label><select id="status" name="status"><option {{ 'selected' if not turma or turma.status == 'Ativa' }}>Ativa</option><option {{ 'selected' if turma and turma.status == 'Inativa' }}>Inativa</option></select></div>
+<div class="field full-field"><label for="descricao">Descrição</label><textarea id="descricao" name="descricao" rows="3">{{ request.form.get('descricao', turma.descricao if turma and turma.descricao else '') }}</textarea></div>
+<div class="form-actions full-field"><a class="btn btn-outline" href="{{ url_for('turmas') }}">Cancelar</a><button class="btn btn-primary" type="submit">Salvar turma</button></div>
+</form></section>
+{% endblock %}
