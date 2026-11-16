@@ -1,7 +1,90 @@
 {% extends "base.html" %}
 {% block title %}Cronograma | Ctrl Play{% endblock %}
 {% block content %}
-<div class="page-heading"><div><p class="eyebrow">PLANEJAMENTO PEDAGÓGICO</p><h1>Cronograma de aulas</h1><p class="muted">Organize datas, horários e conteúdos previstos e ministrados.</p></div><a class="btn btn-primary" href="{{ url_for('aula_form') }}">＋ Nova aula</a></div>
-<section class="panel"><form method="get" class="searchbar"><select name="turma" aria-label="Filtrar por turma"><option value="">Todas as turmas</option>{% for turma in turmas %}<option value="{{ turma.id_turma }}" {{ 'selected' if turma_selecionada == turma.id_turma else '' }}>{{ turma.nome_turma }}</option>{% endfor %}</select><button class="btn btn-outline" type="submit">Filtrar</button></form>
-{% if aulas %}<div class="table-wrap"><table><thead><tr><th>Data / horário</th><th>Aula</th><th>Turma</th><th>Conteúdo previsto</th><th>Situação</th><th>Ações</th></tr></thead><tbody>{% for aula in aulas %}<tr><td><strong>{{ aula.data_aula }}</strong><small class="table-sub">{{ aula.hora_inicio or '—' }}{% if aula.hora_fim %} – {{ aula.hora_fim }}{% endif %}</small></td><td><strong>{{ aula.titulo }}</strong>{% if aula.conteudo_ministrado %}<small class="table-sub">Ministrado: {{ aula.conteudo_ministrado }}</small>{% endif %}</td><td>{{ aula.nome_turma }}</td><td>{{ aula.conteudo_previsto or '—' }}</td><td><span class="badge {{ 'badge-green' if aula.status == 'Realizada' else 'badge-gray' }}">{{ aula.status }}</span></td><td class="actions"><a href="{{ url_for('aula_form', aula_id=aula.id_aula) }}">Editar</a><form method="post" action="{{ url_for('aula_excluir', aula_id=aula.id_aula) }}" data-confirm="Excluir esta aula do cronograma?"><input type="hidden" name="csrf_token" value="{{ session.get('csrf_token') }}"><button class="link-button danger-text" type="submit">Excluir</button></form></td></tr>{% endfor %}</tbody></table></div>{% else %}<div class="empty">Nenhuma aula planejada. Clique em “Nova aula” para começar.</div>{% endif %}</section>
+<div class="page-heading">
+  <div>
+    <p class="eyebrow">PLANEJAMENTO PEDAGÓGICO</p>
+    <h1><span class="calendar-heading-icon" aria-hidden="true">▦</span> Cronograma de aulas</h1>
+    <p class="muted">Escolha um mês e selecione um dia para consultar as aulas previstas.</p>
+  </div>
+  <a class="btn btn-primary" href="{{ url_for('aula_form') }}">＋ Nova aula</a>
+</div>
+
+<section class="panel calendar-panel">
+  <div class="calendar-toolbar">
+    <div class="calendar-month-title">
+      <span class="calendar-icon" aria-hidden="true">▦</span>
+      <h2>{{ mes_titulo }}</h2>
+    </div>
+    <div class="calendar-controls">
+      <a class="btn btn-outline btn-small" aria-label="Mês anterior" title="Mês anterior" href="{{ url_for('cronograma', mes=mes_anterior, turma=turma_selecionada or '') }}">‹</a>
+      <form method="get" class="calendar-month-form">
+        <label class="sr-only" for="mes-calendario">Escolher mês e ano</label>
+        <input id="mes-calendario" type="month" name="mes" value="{{ mes_referencia }}" aria-label="Escolher mês e ano">
+        {% if turma_selecionada %}<input type="hidden" name="turma" value="{{ turma_selecionada }}">{% endif %}
+        <button class="btn btn-outline btn-small" type="submit">Ir</button>
+      </form>
+      <a class="btn btn-outline btn-small" aria-label="Próximo mês" title="Próximo mês" href="{{ url_for('cronograma', mes=proximo_mes, turma=turma_selecionada or '') }}">›</a>
+      <a class="btn btn-outline btn-small" href="{{ url_for('cronograma', data=today, turma=turma_selecionada or '') }}">Hoje</a>
+    </div>
+  </div>
+
+  <form method="get" class="calendar-filter">
+    <input type="hidden" name="mes" value="{{ mes_referencia }}">
+    <input type="hidden" name="data" value="{{ dia_selecionado.isoformat() }}">
+    <label for="filtro-turma">Visualizar turma</label>
+    <select id="filtro-turma" name="turma">
+      <option value="">Todas as turmas</option>
+      {% for turma in turmas %}
+      <option value="{{ turma.id_turma }}" {{ 'selected' if turma_selecionada == turma.id_turma else '' }}>{{ turma.nome_turma }}</option>
+      {% endfor %}
+    </select>
+    <button class="btn btn-outline btn-small" type="submit">Filtrar</button>
+  </form>
+
+  <div class="calendar-grid" role="grid" aria-label="Calendário mensal">
+    {% for nome_dia in ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'] %}
+    <div class="calendar-weekday" role="columnheader">{{ nome_dia }}</div>
+    {% endfor %}
+    {% for semana in semanas %}
+      {% for dia in semana %}
+      <a class="calendar-day {{ 'outside-month' if not dia.no_mes else '' }} {{ 'selected-day' if dia.selecionado else '' }} {{ 'today-day' if dia.hoje else '' }}" role="gridcell"
+         href="{{ url_for('cronograma', data=dia.data, turma=turma_selecionada or '') }}"
+         aria-label="{{ dia.data }}{{ ', possui aulas' if dia.tem_aula else '' }}" aria-current="{{ 'date' if dia.selecionado else 'false' }}">
+        <span class="calendar-day-number">{{ dia.numero }}</span>
+        {% if dia.tem_aula %}<span class="calendar-event-dot" aria-label="Possui aula"></span>{% endif %}
+      </a>
+      {% endfor %}
+    {% endfor %}
+  </div>
+  <p class="calendar-legend"><span class="calendar-event-dot"></span> Dia com aula cadastrada <span class="calendar-today-key"></span> Hoje</p>
+</section>
+
+<section class="panel selected-day-panel">
+  <div class="section-heading">
+    <div><p class="eyebrow">AGENDA DO DIA</p><h2>{{ dia_titulo }}</h2></div>
+    <span class="badge badge-blue">{{ aulas|length }} {{ 'aula' if aulas|length == 1 else 'aulas' }}</span>
+  </div>
+  {% if aulas %}
+    <div class="day-lesson-list">
+    {% for aula in aulas %}
+      <article class="day-lesson-card">
+        <div class="lesson-time">{{ aula.hora_inicio or 'Horário não definido' }}{% if aula.hora_fim %}<span>até {{ aula.hora_fim }}</span>{% endif %}</div>
+        <div class="lesson-details">
+          <div class="lesson-title-row"><h3>{{ aula.titulo }}</h3><span class="badge {{ 'badge-green' if aula.status == 'Realizada' else 'badge-gray' }}">{{ aula.status }}</span></div>
+          <p class="muted">{{ aula.nome_turma }} · {{ aula.curso }}</p>
+          {% if aula.conteudo_previsto %}<p><strong>Conteúdo previsto:</strong> {{ aula.conteudo_previsto }}</p>{% endif %}
+          {% if aula.conteudo_ministrado %}<p><strong>Conteúdo ministrado:</strong> {{ aula.conteudo_ministrado }}</p>{% endif %}
+          {% if aula.observacoes %}<p><strong>Observações:</strong> {{ aula.observacoes }}</p>{% endif %}
+          <div class="actions"><a href="{{ url_for('aula_form', aula_id=aula.id_aula) }}">Editar aula</a>
+            <form method="post" action="{{ url_for('aula_excluir', aula_id=aula.id_aula) }}" data-confirm="Excluir esta aula do cronograma?"><input type="hidden" name="csrf_token" value="{{ session.get('csrf_token') }}"><button class="link-button danger-text" type="submit">Excluir</button></form>
+          </div>
+        </div>
+      </article>
+    {% endfor %}
+    </div>
+  {% else %}
+    <div class="empty">Não há aulas cadastradas para este dia. Se desejar, clique em “Nova aula” para adicionar uma.</div>
+  {% endif %}
+</section>
 {% endblock %}

@@ -156,3 +156,50 @@ body[data-theme="escuro"] .btn-primary:hover { filter: brightness(1.12); }
 .color-preset { width: 30px; height: 30px; border-radius: 50%; border: 3px solid var(--surface); outline: 1px solid var(--line); background: var(--swatch); cursor: pointer; }
 .color-preset:hover { transform: scale(1.12); }
 @media (max-width: 620px) { .theme-options { grid-template-columns: 1fr; } }
+
+
+/* Calendário mensal e agenda diária - versão 4.0 */
+.calendar-panel { margin-bottom: 22px; }
+.calendar-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 20px; }
+.calendar-month-title { display: flex; align-items: center; gap: 12px; }
+.calendar-month-title h2 { margin: 0; font-size: 22px; }
+.calendar-icon, .calendar-heading-icon { color: var(--primary); font-size: 27px; line-height: 1; }
+.calendar-heading-icon { margin-right: 5px; }
+.calendar-controls, .calendar-month-form { display: flex; align-items: center; gap: 8px; }
+.calendar-month-form { margin: 0; }
+.calendar-month-form input { width: 155px; min-height: 36px; padding: 6px 9px; }
+.calendar-filter { display: flex; align-items: center; gap: 10px; max-width: 460px; margin-bottom: 18px; }
+.calendar-filter label { margin: 0; white-space: nowrap; }
+.calendar-filter select { min-height: 36px; padding: 6px 9px; }
+.calendar-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); border-top: 1px solid var(--line); border-left: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+.calendar-weekday { padding: 10px 4px; text-align: center; color: var(--muted); font-size: 11px; font-weight: 800; background: var(--bg); border-right: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+.calendar-day { min-height: 76px; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; gap: 8px; padding: 10px 5px; color: var(--text); background: var(--surface); border-right: 1px solid var(--line); border-bottom: 1px solid var(--line); text-decoration: none; transition: background .15s, color .15s; }
+.calendar-day:hover { background: color-mix(in srgb, var(--primary) 9%, var(--surface)); text-decoration: none; }
+.calendar-day.outside-month { color: var(--muted); opacity: .48; }
+.calendar-day.selected-day { background: var(--primary); color: white; font-weight: 800; }
+.calendar-day.today-day:not(.selected-day) .calendar-day-number { width: 28px; height: 28px; display: grid; place-items: center; border: 1px solid var(--primary); border-radius: 50%; color: var(--primary); }
+.calendar-day-number { font-size: 13px; }
+.calendar-event-dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: var(--primary); }
+.selected-day .calendar-event-dot { background: white; }
+.calendar-legend { display: flex; align-items: center; gap: 8px; margin: 14px 0 0; color: var(--muted); font-size: 11px; }
+.calendar-today-key { width: 10px; height: 10px; margin-left: 10px; border: 1px solid var(--primary); border-radius: 50%; }
+.selected-day-panel { margin-bottom: 24px; }
+.day-lesson-list { display: grid; gap: 12px; }
+.day-lesson-card { display: grid; grid-template-columns: 130px minmax(0, 1fr); gap: 18px; padding: 18px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); }
+.lesson-time { color: var(--primary); font-size: 14px; font-weight: 800; }
+.lesson-time span { display: block; color: var(--muted); font-size: 11px; font-weight: 500; }
+.lesson-title-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.lesson-title-row h3 { margin: 0; }
+.lesson-details > p { margin: 7px 0 0; font-size: 13px; }
+.lesson-details .actions { margin-top: 12px; }
+@media (max-width: 700px) {
+  .calendar-toolbar { align-items: flex-start; flex-direction: column; }
+  .calendar-controls { width: 100%; flex-wrap: wrap; }
+  .calendar-month-form { flex: 1; }
+  .calendar-month-form input { flex: 1; min-width: 0; }
+  .calendar-filter { align-items: flex-start; flex-wrap: wrap; }
+  .calendar-filter select { flex: 1; min-width: 140px; }
+  .calendar-day { min-height: 55px; padding: 7px 2px; }
+  .day-lesson-card { grid-template-columns: 1fr; gap: 8px; }
+  .lesson-title-row { align-items: flex-start; }
+}

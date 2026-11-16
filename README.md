@@ -11,7 +11,7 @@ MVP acadêmico para organizar cadastros de alunos, turmas, matrículas e ativida
 - Cadastro, listagem, edição e inativação de turmas.
 - Matrícula de alunos em turmas, com visualização de alunos por turma, remoção do vínculo e reativação de matrícula sem apagar histórico.
 - Registro de atividades por aluno com nota opcional de 0 a 10.
-- Cronograma de aulas por turma, com data, horário, conteúdo previsto, conteúdo ministrado, observações e situação.
+- Cronograma de aulas em calendário mensal interativo, com navegação entre meses, seleção de dia, filtro por turma e consulta dos detalhes de cada aula.
 - Consulta do histórico individual.
 - Validação de campos no servidor.
 - Consultas SQL parametrizadas.
@@ -150,3 +150,7 @@ Projeto desenvolvido para fins acadêmicos. Os dados de demonstração são fict
 ## Versão 3.0 — Configurações visuais
 
 A versão 3.0 permite que cada usuário escolha o tema claro ou escuro e personalize a cor de destaque. As preferências são salvas individualmente no banco de dados. Para atualizar um banco existente, execute `python -m flask --app app init-db`.
+
+
+### Versão 4.0 — Calendário interativo
+O cronograma agora apresenta um calendário mensal. Selecione um dia para consultar as aulas cadastradas, use as setas para navegar entre meses ou escolha diretamente o mês e o ano. Os dias com aulas recebem um indicador visual. O filtro por turma e as opções de criar, editar e excluir aulas foram mantidos. Não é necessária migração do banco de dados nesta versão.

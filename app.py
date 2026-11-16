@@ -1,4 +1,5 @@
 import os
+import calendar as calendar_module
 import secrets
 import sqlite3
 import re
@@ -444,16 +445,82 @@ def matricula_remover(matricula_id):
 @app.route("/cronograma")
 @login_required
 def cronograma():
+    # O mês e o dia selecionados vêm da URL, permitindo compartilhar ou atualizar a visualização.
+    hoje = date.today()
+    mes_texto = request.args.get("mes", "").strip()
+    data_texto = request.args.get("data", "").strip()
     turma_id = request.args.get("turma", type=int)
-    turmas = g.db.execute("SELECT id_turma, nome_turma, curso FROM turma WHERE status='Ativa' ORDER BY nome_turma").fetchall()
-    sql = """SELECT a.*, t.nome_turma, t.curso FROM aula a JOIN turma t ON t.id_turma=a.id_turma"""
-    params = []
+
+    try:
+        if data_texto:
+            dia_selecionado = date.fromisoformat(data_texto)
+            ano, mes = dia_selecionado.year, dia_selecionado.month
+        elif mes_texto:
+            ano, mes = (int(parte) for parte in mes_texto.split("-", 1))
+            date(ano, mes, 1)  # valida ano e mês
+            dia_selecionado = hoje if (hoje.year, hoje.month) == (ano, mes) else date(ano, mes, 1)
+        else:
+            ano, mes = hoje.year, hoje.month
+            dia_selecionado = hoje
+    except (ValueError, TypeError):
+        ano, mes = hoje.year, hoje.month
+        dia_selecionado = hoje
+
+    primeiro_dia = date(ano, mes, 1)
+    ultimo_dia = date(ano, mes, calendar_module.monthrange(ano, mes)[1])
+    mes_anterior = date(ano - 1, 12, 1) if mes == 1 else date(ano, mes - 1, 1)
+    proximo_mes = date(ano + 1, 1, 1) if mes == 12 else date(ano, mes + 1, 1)
+
+    turmas = g.db.execute(
+        "SELECT id_turma, nome_turma, curso FROM turma WHERE status='Ativa' ORDER BY nome_turma"
+    ).fetchall()
+    if turma_id and not any(turma["id_turma"] == turma_id for turma in turmas):
+        turma_id = None
+
+    sql_datas = "SELECT DISTINCT data_aula FROM aula WHERE data_aula BETWEEN ? AND ?"
+    parametros_datas = [primeiro_dia.isoformat(), ultimo_dia.isoformat()]
     if turma_id:
-        sql += " WHERE a.id_turma=?"
-        params.append(turma_id)
-    sql += " ORDER BY a.data_aula, a.hora_inicio, a.id_aula"
-    aulas = g.db.execute(sql, params).fetchall()
-    return render_template("cronograma.html", aulas=aulas, turmas=turmas, turma_selecionada=turma_id)
+        sql_datas += " AND id_turma = ?"
+        parametros_datas.append(turma_id)
+    dias_com_aula = {
+        linha["data_aula"] for linha in g.db.execute(sql_datas, parametros_datas).fetchall()
+    }
+
+    semanas = []
+    for semana in calendar_module.Calendar(firstweekday=6).monthdatescalendar(ano, mes):
+        celulas = []
+        for dia in semana:
+            celulas.append({
+                "data": dia.isoformat(),
+                "numero": dia.day,
+                "no_mes": dia.month == mes,
+                "selecionado": dia == dia_selecionado,
+                "hoje": dia == hoje,
+                "tem_aula": dia.isoformat() in dias_com_aula,
+            })
+        semanas.append(celulas)
+
+    sql_aulas = """SELECT a.*, t.nome_turma, t.curso
+                   FROM aula a JOIN turma t ON t.id_turma=a.id_turma
+                   WHERE a.data_aula = ?"""
+    parametros_aulas = [dia_selecionado.isoformat()]
+    if turma_id:
+        sql_aulas += " AND a.id_turma = ?"
+        parametros_aulas.append(turma_id)
+    sql_aulas += " ORDER BY a.hora_inicio, a.id_aula"
+    aulas = g.db.execute(sql_aulas, parametros_aulas).fetchall()
+
+    nomes_meses = ["janeiro", "fevereiro", "março", "abril", "maio", "junho",
+                   "julho", "agosto", "setembro", "outubro", "novembro", "dezembro"]
+    nomes_dias = ["domingo", "segunda-feira", "terça-feira", "quarta-feira",
+                  "quinta-feira", "sexta-feira", "sábado"]
+    return render_template(
+        "cronograma.html", aulas=aulas, turmas=turmas, turma_selecionada=turma_id,
+        semanas=semanas, mes_referencia=primeiro_dia.isoformat(),
+        mes_titulo=f"{nomes_meses[mes - 1].capitalize()} de {ano}",
+        mes_anterior=mes_anterior.strftime("%Y-%m"), proximo_mes=proximo_mes.strftime("%Y-%m"),
+        dia_selecionado=dia_selecionado, dia_titulo=f"{nomes_dias[(dia_selecionado.weekday() + 1) % 7].capitalize()}, {dia_selecionado.strftime('%d/%m/%Y')}"
+    )
 
 
 @app.route("/aulas/nova", methods=["GET", "POST"])
