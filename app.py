@@ -407,6 +407,105 @@ def historico(aluno_id):
     return render_template("historico.html", aluno=aluno, atividades=registros)
 
 
+@app.route("/alunos/<int:aluno_id>/desempenho")
+@login_required
+def aluno_desempenho(aluno_id):
+    aluno = g.db.execute("SELECT * FROM aluno WHERE id_aluno=?", (aluno_id,)).fetchone()
+    if aluno is None:
+        abort(404)
+    resumo = g.db.execute("""
+        SELECT COUNT(*) AS total_atividades,
+               COUNT(nota) AS atividades_com_nota,
+               ROUND(AVG(nota), 2) AS media_notas
+        FROM atividade WHERE id_aluno=?
+    """, (aluno_id,)).fetchone()
+    frequencia = g.db.execute("""
+        SELECT COUNT(*) AS total_registros,
+               SUM(CASE WHEN status='Presente' THEN 1 ELSE 0 END) AS presentes,
+               SUM(CASE WHEN status='Falta' THEN 1 ELSE 0 END) AS faltas,
+               SUM(CASE WHEN status='Justificada' THEN 1 ELSE 0 END) AS justificadas
+        FROM presenca WHERE id_aluno=?
+    """, (aluno_id,)).fetchone()
+    percentual = round((frequencia['presentes'] or 0) * 100 / frequencia['total_registros'], 1) if frequencia['total_registros'] else None
+    atividades = g.db.execute("SELECT * FROM atividade WHERE id_aluno=? ORDER BY data_registro DESC, id_atividade DESC", (aluno_id,)).fetchall()
+    registros_presenca = g.db.execute("""
+        SELECT p.status, p.observacao, a.titulo, a.data_aula, t.nome_turma
+        FROM presenca p JOIN aula a ON a.id_aula=p.id_aula
+        JOIN turma t ON t.id_turma=a.id_turma
+        WHERE p.id_aluno=? ORDER BY a.data_aula DESC, a.hora_inicio DESC
+    """, (aluno_id,)).fetchall()
+    return render_template('aluno_desempenho.html', aluno=aluno, resumo=resumo,
+                           frequencia=frequencia, percentual=percentual,
+                           atividades=atividades, presencas=registros_presenca)
+
+
+@app.route("/desempenho")
+@login_required
+def desempenho():
+    alunos = g.db.execute("""
+        SELECT a.id_aluno, a.nome, a.status,
+               (SELECT COUNT(*) FROM atividade at WHERE at.id_aluno=a.id_aluno) AS total_atividades,
+               (SELECT ROUND(AVG(at.nota), 2) FROM atividade at WHERE at.id_aluno=a.id_aluno) AS media_notas,
+               (SELECT COUNT(*) FROM presenca p WHERE p.id_aluno=a.id_aluno) AS total_presencas,
+               (SELECT COUNT(*) FROM presenca p WHERE p.id_aluno=a.id_aluno AND p.status='Presente') AS presentes,
+               (SELECT COUNT(*) FROM presenca p WHERE p.id_aluno=a.id_aluno AND p.status='Falta') AS faltas
+        FROM aluno a ORDER BY a.nome
+    """).fetchall()
+    relatorio = []
+    for aluno in alunos:
+        total = aluno['total_presencas'] or 0
+        relatorio.append({
+            **dict(aluno),
+            'frequencia': round((aluno['presentes'] or 0) * 100 / total, 1) if total else None
+        })
+    return render_template('desempenho.html', alunos=relatorio)
+
+
+@app.route("/aulas/<int:aula_id>/presencas", methods=["GET", "POST"])
+@login_required
+def aula_presencas(aula_id):
+    aula = g.db.execute("""
+        SELECT a.*, t.nome_turma, t.curso FROM aula a
+        JOIN turma t ON t.id_turma=a.id_turma WHERE a.id_aula=?
+    """, (aula_id,)).fetchone()
+    if aula is None:
+        abort(404)
+    alunos = g.db.execute("""
+        SELECT al.id_aluno, al.nome, p.status, p.observacao
+        FROM matricula m JOIN aluno al ON al.id_aluno=m.id_aluno
+        LEFT JOIN presenca p ON p.id_aula=? AND p.id_aluno=al.id_aluno
+        WHERE m.id_turma=? AND m.status='Ativa' AND al.status='Ativo'
+        ORDER BY al.nome
+    """, (aula_id, aula['id_turma'])).fetchall()
+    if request.method == 'POST':
+        csrf_protect()
+        statuses = request.form.getlist('status')
+        observations = request.form.getlist('observacao')
+        ids = request.form.getlist('id_aluno')
+        if len(ids) != len(alunos) or len(statuses) != len(alunos) or len(observations) != len(alunos):
+            flash('A lista de alunos foi alterada. Atualize a página e tente novamente.', 'danger')
+            return render_template('presencas.html', aula=aula, alunos=alunos)
+        permitidos = {'Presente', 'Falta', 'Justificada'}
+        if any(status not in permitidos for status in statuses):
+            flash('Selecione uma situação válida para todos os alunos.', 'danger')
+            return render_template('presencas.html', aula=aula, alunos=alunos)
+        data_registro = date.today().isoformat()
+        for aluno, status, observacao, aluno_id in zip(alunos, statuses, observations, ids):
+            if str(aluno['id_aluno']) != aluno_id:
+                abort(400)
+            g.db.execute("""
+                INSERT INTO presenca (id_aula, id_aluno, status, observacao, data_registro)
+                VALUES (?, ?, ?, ?, ?)
+                ON CONFLICT(id_aula, id_aluno) DO UPDATE SET
+                    status=excluded.status, observacao=excluded.observacao,
+                    data_registro=excluded.data_registro
+            """, (aula_id, aluno['id_aluno'], status, observacao.strip() or None, data_registro))
+        g.db.commit()
+        flash('Presenças salvas com sucesso.', 'success')
+        return redirect(url_for('cronograma', data=aula['data_aula']))
+    return render_template('presencas.html', aula=aula, alunos=alunos)
+
+
 @app.route("/turmas/<int:turma_id>")
 @login_required
 def turma_detalhe(turma_id):

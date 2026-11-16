@@ -154,3 +154,10 @@ A versão 3.0 permite que cada usuário escolha o tema claro ou escuro e persona
 
 ### Versão 4.0 — Calendário interativo
 O cronograma agora apresenta um calendário mensal. Selecione um dia para consultar as aulas cadastradas, use as setas para navegar entre meses ou escolha diretamente o mês e o ano. Os dias com aulas recebem um indicador visual. O filtro por turma e as opções de criar, editar e excluir aulas foram mantidos. Não é necessária migração do banco de dados nesta versão.
+
+
+## Versão 5.0 — Presença e desempenho
+- Acesse **Cronograma**, selecione uma aula e clique em **Registrar presença** para marcar Presente, Falta ou Justificada.
+- Acesse **Desempenho** para consultar o resumo de notas e frequência de todos os alunos.
+- Clique em **Ver relatório** para consultar o histórico individual de atividades, notas e presenças.
+- A tabela `presenca` é criada automaticamente ao executar `python -m flask --app app init-db`.

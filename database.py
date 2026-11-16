@@ -84,6 +84,18 @@ def init_db(database_path):
             FOREIGN KEY (id_turma) REFERENCES turma(id_turma)
         );
 
+        CREATE TABLE IF NOT EXISTS presenca (
+            id_presenca INTEGER PRIMARY KEY AUTOINCREMENT,
+            id_aula INTEGER NOT NULL,
+            id_aluno INTEGER NOT NULL,
+            status TEXT NOT NULL CHECK (status IN ('Presente', 'Falta', 'Justificada')),
+            observacao TEXT,
+            data_registro TEXT NOT NULL,
+            FOREIGN KEY (id_aula) REFERENCES aula(id_aula) ON DELETE CASCADE,
+            FOREIGN KEY (id_aluno) REFERENCES aluno(id_aluno),
+            UNIQUE (id_aula, id_aluno)
+        );
+
         CREATE INDEX IF NOT EXISTS idx_aluno_nome ON aluno(nome);
         CREATE INDEX IF NOT EXISTS idx_atividade_aluno_data
             ON atividade(id_aluno, data_registro);
@@ -94,5 +106,7 @@ def init_db(database_path):
         db.execute("ALTER TABLE atividade ADD COLUMN nota REAL CHECK (nota IS NULL OR (nota >= 0 AND nota <= 10))")
 
     db.execute("CREATE INDEX IF NOT EXISTS idx_aula_turma_data ON aula(id_turma, data_aula)")
+    db.execute("CREATE INDEX IF NOT EXISTS idx_presenca_aluno ON presenca(id_aluno, status)")
+    db.execute("CREATE INDEX IF NOT EXISTS idx_presenca_aula ON presenca(id_aula)")
     db.commit()
     db.close()

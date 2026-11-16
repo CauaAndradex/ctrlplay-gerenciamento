@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block title %}Relatório de {{ aluno.nome }} | Ctrl Play{% endblock %}
+{% block content %}
+<div class="page-heading"><div><p class="eyebrow">RELATÓRIO INDIVIDUAL</p><h1>{{ aluno.nome }}</h1><p class="muted">{{ aluno.idade }} anos · {{ aluno.status }}</p></div><a class="btn btn-outline" href="{{ url_for('desempenho') }}">Voltar aos relatórios</a></div>
+<div class="stats performance-stats">
+  <article class="stat-card"><span class="stat-icon">★</span><p>Média das notas</p><strong>{% if resumo.media_notas is not none %}{{ '%.1f'|format(resumo.media_notas) }}{% else %}—{% endif %}</strong><small class="muted">de 10 · {{ resumo.atividades_com_nota }} atividades avaliadas</small></article>
+  <article class="stat-card"><span class="stat-icon">✓</span><p>Frequência</p><strong>{% if percentual is not none %}{{ '%.1f'|format(percentual) }}%{% else %}—{% endif %}</strong><small class="muted">{{ frequencia.presentes or 0 }} presenças registradas</small></article>
+  <article class="stat-card"><span class="stat-icon">▤</span><p>Atividades</p><strong>{{ resumo.total_atividades }}</strong><small class="muted">{{ frequencia.faltas or 0 }} faltas · {{ frequencia.justificadas or 0 }} justificadas</small></article>
+</div>
+<section class="panel report-section"><div class="section-heading"><div><h2>Notas e atividades</h2></div></div>
+{% if atividades %}<div class="table-wrap"><table><thead><tr><th>Atividade</th><th>Data</th><th>Nota</th><th>Observação</th></tr></thead><tbody>{% for at in atividades %}<tr><td>{{ at.titulo }}</td><td>{{ at.data_registro }}</td><td>{% if at.nota is not none %}{{ '%.1f'|format(at.nota) }}/10{% else %}Pendente{% endif %}</td><td>{{ at.observacao or '—' }}</td></tr>{% endfor %}</tbody></table></div>{% else %}<div class="empty">Nenhuma atividade registrada.</div>{% endif %}</section>
+<section class="panel report-section"><div class="section-heading"><div><h2>Histórico de presença</h2></div></div>
+{% if presencas %}<div class="table-wrap"><table><thead><tr><th>Aula</th><th>Turma</th><th>Data</th><th>Situação</th><th>Observação</th></tr></thead><tbody>{% for p in presencas %}<tr><td>{{ p.titulo }}</td><td>{{ p.nome_turma }}</td><td>{{ p.data_aula }}</td><td><span class="badge {{ 'badge-green' if p.status == 'Presente' else 'badge-gray' }}">{{ p.status }}</span></td><td>{{ p.observacao or '—' }}</td></tr>{% endfor %}</tbody></table></div>{% else %}<div class="empty">Nenhuma presença registrada.</div>{% endif %}</section>
+{% endblock %}

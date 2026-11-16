@@ -203,3 +203,29 @@ body[data-theme="escuro"] .btn-primary:hover { filter: brightness(1.12); }
   .day-lesson-card { grid-template-columns: 1fr; gap: 8px; }
   .lesson-title-row { align-items: flex-start; }
 }
+
+
+/* Versão 5.0: calendário compacto, presença e relatórios */
+.calendar-compact { padding: 18px; }
+.calendar-compact .calendar-toolbar { margin-bottom: 12px; }
+.calendar-compact .calendar-toolbar h2 { margin: 0; font-size: 19px; }
+.calendar-compact .calendar-day { min-height: 48px; padding: 5px 3px; gap: 3px; }
+.calendar-compact .calendar-weekday { padding: 7px 3px; }
+.calendar-compact .calendar-legend { margin-top: 8px; }
+.compact-filter { margin-bottom: 12px; }
+.compact-filter select { max-width: 260px; }
+.attendance-table select, .attendance-table input { min-height: 38px; padding: 7px 9px; }
+.attendance-table td:first-child { min-width: 190px; }
+.attendance-table td:nth-child(2) { min-width: 160px; }
+.attendance-table td:nth-child(3) { min-width: 220px; }
+.report-section { margin-top: 18px; }
+.performance-stats { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.performance-stats .stat-card strong { font-size: 27px; }
+@media (max-width: 620px) {
+  .calendar-compact { padding: 12px; }
+  .calendar-compact .calendar-toolbar { gap: 9px; }
+  .calendar-compact .calendar-controls { gap: 5px; }
+  .calendar-compact .calendar-month-form input { width: 135px; }
+  .calendar-compact .calendar-day { min-height: 42px; }
+  .performance-stats { grid-template-columns: 1fr; }
+}

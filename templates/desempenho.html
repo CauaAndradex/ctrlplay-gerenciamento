@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block title %}Desempenho | Ctrl Play{% endblock %}
+{% block content %}
+<div class="page-heading"><div><p class="eyebrow">RELATÓRIOS</p><h1>Desempenho dos alunos</h1><p class="muted">Acompanhe notas e frequência em um só lugar.</p></div></div>
+<section class="panel">
+{% if alunos %}<div class="table-wrap"><table><thead><tr><th>Aluno</th><th>Atividades</th><th>Média</th><th>Presenças</th><th>Faltas</th><th>Frequência</th><th></th></tr></thead><tbody>
+{% for aluno in alunos %}<tr><td><strong>{{ aluno.nome }}</strong><small class="table-sub">{{ aluno.status }}</small></td><td>{{ aluno.total_atividades }}</td><td>{% if aluno.media_notas is not none %}<strong>{{ '%.1f'|format(aluno.media_notas) }}/10</strong>{% else %}—{% endif %}</td><td>{{ aluno.presentes or 0 }}</td><td>{{ aluno.faltas or 0 }}</td><td>{% if aluno.frequencia is not none %}{{ '%.1f'|format(aluno.frequencia) }}%{% else %}Sem registros{% endif %}</td><td><a href="{{ url_for('aluno_desempenho', aluno_id=aluno.id_aluno) }}">Ver relatório</a></td></tr>{% endfor %}
+</tbody></table></div>{% else %}<div class="empty">Nenhum aluno cadastrado.</div>{% endif %}
+</section>
+{% endblock %}
