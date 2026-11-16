@@ -21,6 +21,13 @@ def init_db(database_path):
             senha_hash TEXT NOT NULL
         );
 
+        CREATE TABLE IF NOT EXISTS configuracao_usuario (
+            id_usuario INTEGER PRIMARY KEY,
+            tema TEXT NOT NULL DEFAULT 'claro' CHECK (tema IN ('claro', 'escuro')),
+            cor_destaque TEXT NOT NULL DEFAULT '#315ee8',
+            FOREIGN KEY (id_usuario) REFERENCES usuario(id_usuario) ON DELETE CASCADE
+        );
+
         CREATE TABLE IF NOT EXISTS aluno (
             id_aluno INTEGER PRIMARY KEY AUTOINCREMENT,
             nome TEXT NOT NULL,

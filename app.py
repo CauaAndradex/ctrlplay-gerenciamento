@@ -1,6 +1,7 @@
 import os
 import secrets
 import sqlite3
+import re
 from datetime import date
 from functools import wraps
 from pathlib import Path
@@ -59,7 +60,15 @@ def login_required(view):
 
 @app.context_processor
 def inject_globals():
-    return {"today": date.today().isoformat()}
+    preferencias = {"tema": "claro", "cor_destaque": "#315ee8"}
+    if session.get("user_id"):
+        linha = g.db.execute(
+            "SELECT tema, cor_destaque FROM configuracao_usuario WHERE id_usuario = ?",
+            (session["user_id"],)
+        ).fetchone()
+        if linha:
+            preferencias = dict(linha)
+    return {"today": date.today().isoformat(), "user_preferences": preferencias}
 
 
 @app.route("/login", methods=["GET", "POST"])
@@ -93,6 +102,39 @@ def logout():
     session.clear()
     flash("Você saiu do sistema.", "success")
     return redirect(url_for("login"))
+
+
+@app.route("/configuracoes", methods=["GET", "POST"])
+@login_required
+def configuracoes():
+    atual = g.db.execute(
+        "SELECT tema, cor_destaque FROM configuracao_usuario WHERE id_usuario = ?",
+        (session["user_id"],)
+    ).fetchone()
+    preferencias = dict(atual) if atual else {"tema": "claro", "cor_destaque": "#315ee8"}
+
+    if request.method == "POST":
+        csrf_protect()
+        tema = request.form.get("tema", "claro")
+        cor = request.form.get("cor_destaque", "#315ee8").strip().lower()
+        if tema not in ("claro", "escuro"):
+            flash("Selecione um tema válido.", "danger")
+        elif not re.fullmatch(r"#[0-9a-f]{6}", cor):
+            flash("Escolha uma cor válida.", "danger")
+        else:
+            g.db.execute("""
+                INSERT INTO configuracao_usuario (id_usuario, tema, cor_destaque)
+                VALUES (?, ?, ?)
+                ON CONFLICT(id_usuario) DO UPDATE SET
+                    tema = excluded.tema,
+                    cor_destaque = excluded.cor_destaque
+            """, (session["user_id"], tema, cor))
+            g.db.commit()
+            flash("Suas preferências foram salvas.", "success")
+            return redirect(url_for("configuracoes"))
+        preferencias = {"tema": tema, "cor_destaque": cor}
+
+    return render_template("configuracoes.html", preferencias=preferencias)
 
 
 @app.route("/")

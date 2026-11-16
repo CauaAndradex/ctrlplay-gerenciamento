@@ -5,3 +5,12 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   });
 });
+
+
+// Preenche o seletor de cor quando uma cor sugerida é clicada.
+document.querySelectorAll(".color-preset").forEach((botao) => {
+  botao.addEventListener("click", () => {
+    const seletor = document.querySelector("#cor_destaque");
+    if (seletor) seletor.value = botao.dataset.color;
+  });
+});

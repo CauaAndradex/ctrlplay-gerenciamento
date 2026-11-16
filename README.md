@@ -145,3 +145,8 @@ O banco impede matrícula duplicada para o mesmo par aluno/turma. A inativação
 ## Licença e finalidade
 
 Projeto desenvolvido para fins acadêmicos. Os dados de demonstração são fictícios.
+
+
+## Versão 3.0 — Configurações visuais
+
+A versão 3.0 permite que cada usuário escolha o tema claro ou escuro e personalize a cor de destaque. As preferências são salvas individualmente no banco de dados. Para atualizar um banco existente, execute `python -m flask --app app init-db`.

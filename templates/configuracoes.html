@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block title %}Configurações | Ctrl Play{% endblock %}
+{% block content %}
+<section class="page-heading">
+  <div>
+    <div class="eyebrow">PERSONALIZAÇÃO</div>
+    <h1>Configurações</h1>
+    <p class="muted">Personalize a aparência do sistema do seu jeito.</p>
+  </div>
+</section>
+
+<form method="post" class="panel form-panel settings-panel">
+  <input type="hidden" name="csrf_token" value="{{ session.get('csrf_token') }}">
+
+  <div class="settings-section">
+    <h2>Tema do sistema</h2>
+    <p class="muted">Escolha entre a aparência clara ou escura.</p>
+    <div class="theme-options">
+      <label class="theme-option">
+        <input type="radio" name="tema" value="claro" {% if preferencias.tema == 'claro' %}checked{% endif %}>
+        <span class="theme-preview theme-preview-light"><strong>☀ Claro</strong><small>Fundo claro e cartões brancos</small></span>
+      </label>
+      <label class="theme-option">
+        <input type="radio" name="tema" value="escuro" {% if preferencias.tema == 'escuro' %}checked{% endif %}>
+        <span class="theme-preview theme-preview-dark"><strong>☾ Escuro</strong><small>Fundo escuro e cartões suaves</small></span>
+      </label>
+    </div>
+  </div>
+
+  <div class="settings-section">
+    <h2>Cor de destaque</h2>
+    <p class="muted">A cor escolhida será usada em botões, links e elementos de destaque.</p>
+    <div class="color-setting">
+      <label for="cor_destaque">Escolha sua cor</label>
+      <input id="cor_destaque" name="cor_destaque" type="color" value="{{ preferencias.cor_destaque }}">
+      <span class="tiny muted">Você pode selecionar qualquer cor no seletor.</span>
+    </div>
+    <div class="color-presets" aria-label="Cores sugeridas">
+      {% for cor in ['#315ee8', '#7c3aed', '#db2777', '#dc2626', '#ea580c', '#16a34a', '#0891b2', '#64748b'] %}
+      <button class="color-preset" type="button" data-color="{{ cor }}" style="--swatch: {{ cor }}" aria-label="Selecionar cor {{ cor }}" title="{{ cor }}"></button>
+      {% endfor %}
+    </div>
+  </div>
+
+  <div class="form-actions">
+    <button class="btn btn-primary" type="submit">Salvar configurações</button>
+  </div>
+</form>
+{% endblock %}

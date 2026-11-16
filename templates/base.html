@@ -6,7 +6,7 @@
   <title>{% block title %}Ctrl Play | Gestão{% endblock %}</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
-<body>
+<body data-theme="{{ user_preferences.tema }}" style="--primary: {{ user_preferences.cor_destaque }};">
   {% if session.get('user_id') %}
   <header class="topbar">
     <a class="brand" href="{{ url_for('index') }}"><span class="brand-mark">CP</span><span>CTRL PLAY <small>GESTÃO</small></span></a>
@@ -17,6 +17,7 @@
       <a href="{{ url_for('atividades') }}">Atividades</a>
       <a href="{{ url_for('matricula_nova') }}">Matrículas</a>
       <a href="{{ url_for('cronograma') }}">Cronograma</a>
+      <a href="{{ url_for('configuracoes') }}">Configurações</a>
     </nav>
     <div class="user-area"><span>{{ session.get('user_name') }}</span>
       <form method="post" action="{{ url_for('logout') }}">
