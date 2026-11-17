@@ -10,3 +10,10 @@
 ## Banco de dados
 - Nova tabela `presenca`, relacionada às aulas e aos alunos.
 - A inicialização cria a tabela e os índices sem apagar os dados existentes.
+
+## Melhorias da versão 5.0
+
+- Controle de presença dos alunos.
+- Relatórios de desempenho e frequência.
+- Acompanhamento individual dos alunos.
+- Simplificação da interface do calendário.
