@@ -26,5 +26,4 @@ jobs:
           pip install pytest pytest-cov
 
       - name: Executar testes
-        run: |
-          python -m pytest --cov --cov-report=term-missing
+        run: python -m pytest --cov --cov-report=term-missing
